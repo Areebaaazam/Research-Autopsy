@@ -128,6 +128,22 @@ function buildLlmError(error) {
   };
 }
 
+// Shared PDF-tolerant regex for matching "Research Gap N:" — handles PDF line-break artifacts (e.g., "R esearch Gap 2:")
+const GAP_SPLITTER = /(?=R\s*e\s*s\s*e\s*a\s*r\s*c\s*h\s+Gap\s*\d+\s*:)/gi;
+const GAP_DETECTOR = /R\s*e\s*s\s*e\s*a\s*r\s*c\s*h\s+Gap\s*\d+\s*:/i;
+
+// Normalize PDF letter-spacing artifacts for common section headings
+function normalizePdfHeadings(text) {
+  return text
+    .replace(/\bI\s+N\s+T\s+R\s+O\b/gi, 'INTRODUCTION')
+    .replace(/\bC\s+O\s+N\s+C\s+L\s+U\s+S\s+I\s+O\s+N\b/gi, 'CONCLUSION')
+    .replace(/\bL\s+I\s+M\s+I\s+T\s+A\s+T\s+I\s+O\s+N\b/gi, 'LIMITATION')
+    .replace(/\bR\s+E\s+F\s+E\s+R\s+E\s+N\s+C\s+E\b/gi, 'REFERENCES')
+    .replace(/\bM\s+E\s+T\s+H\s+O\s+D\b/gi, 'METHOD')
+    .replace(/\bR\s+E\s+S\s+U\s+L\s+T\b/gi, 'RESULT')
+    .replace(/\bD\s+I\s+S\s+C\s+U\s+S\s+S\s+I\s+O\s+N\b/gi, 'DISCUSSION');
+}
+
 async function callLLM(systemPrompt, userMessage, temperature = 0.3) {
   if (!USE_AI) return { ok: false, error: { kind: 'provider_error', status: 503, message: 'AI is not configured.', retryAfterSec: undefined } };
   const t0 = Date.now();
@@ -309,9 +325,7 @@ function extractGapRelevantSections(text) {
   const parts = [];
 
   // Collect every "Research Gap N:" block. Handle PDF line-break artifacts (e.g., "R esearch")
-  const gapSplitter = /(?=R\s*e\s*s\s*e\s*a\s*r\s*c\s*h\s+Gap\s*\d+\s*:)/gi;
-  const gapDetector = /R\s*e\s*s\s*e\s*a\s*r\s*c\s*h\s+Gap\s*\d+\s*:/i;
-  const gapBlocks = text.split(gapSplitter).filter(s => gapDetector.test(s));
+  const gapBlocks = text.split(GAP_SPLITTER).filter(s => GAP_DETECTOR.test(s));
   for (const block of gapBlocks) {
     const content = block.replace(/\s+/g, ' ').trim();
     if (content.length > 100) {
@@ -359,10 +373,7 @@ function extractGapRelevantSections(text) {
  * Returns [{ sourceId: "gap_1", label: "Research Gap 1:", passage: "...original passage..." }, ...]
  */
 function extractNumberedGaps(text) {
-  // Use the same PDF-artifact-tolerant regex as extractGapRelevantSections
-  const gapSplitter = /(?=R\s*e\s*s\s*e\s*a\s*r\s*c\s*h\s+Gap\s*\d+\s*:)/gi;
-  const gapDetector = /R\s*e\s*s\s*e\s*a\s*r\s*c\s*h\s+Gap\s*\d+\s*:/i;
-  const gapBlocks = text.split(gapSplitter).filter(s => gapDetector.test(s));
+  const gapBlocks = text.split(GAP_SPLITTER).filter(s => GAP_DETECTOR.test(s));
   const result = [];
   for (const block of gapBlocks) {
     const content = block.replace(/\s+/g, ' ').trim();
@@ -430,14 +441,7 @@ function abstractFallback(text) {
 
 function surveyAnalysis(text) {
   // Normalize PDF spacing artifacts for section detection
-  const normalized = text
-    .replace(/\bI\s+N\s+T\s+R\s+O\b/gi, 'INTRODUCTION')
-    .replace(/\bC\s+O\s+N\s+C\s+L\s+U\s+S\s+I\s+O\s+N\b/gi, 'CONCLUSION')
-    .replace(/\bL\s+I\s+M\s+I\s+T\s+A\s+T\s+I\s+O\s+N\b/gi, 'LIMITATION')
-    .replace(/\bR\s+E\s+F\s+E\s+R\s+E\s+N\s+C\s+E\b/gi, 'REFERENCES')
-    .replace(/\bM\s+E\s+T\s+H\s+O\s+D\b/gi, 'METHOD')
-    .replace(/\bR\s+E\s+S\s+U\s+L\s+T\b/gi, 'RESULT')
-    .replace(/\bD\s+I\s+S\s+C\s+U\s+S\s+S\s+I\s+O\s+N\b/gi, 'DISCUSSION')
+  const normalized = normalizePdfHeadings(text)
     .replace(/\bT\s+A\s+X\s+O\s+N\s+O\s+M\s+Y\b/gi, 'TAXONOMY')
     .replace(/\bC\s+O\s+M\s+P\s+A\s+R\s+I\s+S\s+O\s+N\b/gi, 'COMPARISON');
   text = normalized;
@@ -583,16 +587,8 @@ function buildSurveyEvidence(text, sections) {
 
 function generateHeuristicAnalysis(text) {
   // Normalize PDF extraction spacing artifacts for section detection
-  // Preserve original text for everything else
-  const sectionText = text
-    .replace(/\bI\s+N\s+T\s+R\s+O\s+D\s+U\s+C\s+T\s+I\s+O\s+N\b/gi, 'INTRODUCTION')
-    .replace(/\bC\s+O\s+N\s+C\s+L\s+U\s+S\s+I\s+O\s+N\b/gi, 'CONCLUSION')
-    .replace(/\bL\s+I\s+M\s+I\s+T\s+A\s+T\s+I\s+O\s+N\b/gi, 'LIMITATION')
-    .replace(/\bR\s+E\s+F\s+E\s+R\s+E\s+N\s+C\s+E\b/gi, 'REFERENCES')
-    .replace(/\bM\s+E\s+T\s+H\s+O\s+D\b/gi, 'METHOD')
-    .replace(/\bE\s+X\s+P\s+E\s+R\s+I\s+M\s+E\s+N\s+T\b/gi, 'EXPERIMENT')
-    .replace(/\bR\s+E\s+S\s+U\s+L\s+T\b/gi, 'RESULT')
-    .replace(/\bD\s+I\s+S\s+C\s+U\s+S\s+S\s+I\s+O\s+N\b/gi, 'DISCUSSION');
+  const sectionText = normalizePdfHeadings(text)
+    .replace(/\bE\s+X\s+P\s+E\s+R\s+I\s+M\s+E\s+N\s+T\b/gi, 'EXPERIMENT');
   const lines = text.split('\n').filter(l => l.trim());
   const lower = text.toLowerCase();
 

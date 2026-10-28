@@ -1,32 +1,41 @@
-# React + TypeScript + Vite
+# Research Autopsy
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+AI-powered research paper analysis tool. Upload a PDF, and the app extracts structured information, identifies research gaps, checks idea novelty, stress-tests methodology, and more.
 
-Currently, two official plugins are available:
+## Status
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Early development. Core extraction and gap analysis work. Expect rough edges and incomplete features.
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```sh
+# Install dependencies
+cd server && npm install
+cd .. && npm install
 
-## Expanding the Oxlint configuration
+# Set API key (Groq, Google, or OpenAI)
+#   gsk_...   → Groq (default)
+#   AIza...   → Google Gemini
+#   sk-...    → OpenAI
+echo 'GROQ_API_KEY=gsk_your_key_here' > server/.env
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+# Start backend + frontend
+cd server && node index.js &
+cd .. && npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Open http://localhost:5173. Upload a PDF (survey papers work best) and explore the modules.
+
+## Tests
+
+```sh
+npx vitest run
+```
+
+78 tests across 4 suites: quotation validation, text polish, numerical audit, and gap extraction + error handling.
+
+## Tech
+
+- Frontend: React 19, TypeScript, Vite, Tailwind 4
+- Backend: Express 5, PDF text extraction
+- AI: Groq (qwen), Google Gemini, or OpenAI
