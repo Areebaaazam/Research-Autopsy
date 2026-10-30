@@ -10,6 +10,7 @@ interface NavItem { id: string; label: string; icon: typeof LayoutDashboard; }
 
 const primaryItems: { label: string; items: NavItem[] }[] = [
   { label: 'Overview', items: [
+    { id: 'salah', label: 'Salah Times', icon: Calendar },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'papers', label: 'Papers', icon: FileText },
   ]},

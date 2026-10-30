@@ -10,6 +10,7 @@ import { AlertCircle, X, Wifi, WifiOff, Command, PanelRight, PanelRightClose } f
 // Eager — core working modules
 import { DashboardPage } from './pages/DashboardPage';
 import { PapersPage } from './pages/PapersPage';
+import { SalahPage } from './pages/SalahPage';
 import { ClaimExplorerPage } from './pages/ClaimExplorerPage';
 import { NumericalAuditPage } from './pages/NumericalAuditPage';
 import { GapsPage } from './pages/GapsPage';
@@ -35,7 +36,7 @@ const RoadmapPage = lazy(() => import('./pages/RoadmapPage').then(m => ({ defaul
 const PaperAlignPage = lazy(() => import('./pages/PaperAlignPage').then(m => ({ default: m.PaperAlignPage })));
 
 const MODULE_ROUTES: Record<string, string> = {
-  dashboard: '/', papers: '/papers', claimExplorer: '/findings', numericalAudit: '/findings/audit',
+  salah: '/salah', dashboard: '/', papers: '/papers', claimExplorer: '/findings', numericalAudit: '/findings/audit',
   gaps: '/findings/gaps', novelty: '/findings/overlap', experiments: '/experiments',
   autopsy: '/findings/autopsy', reviewerWorkspace: '/findings/reviewer', timeline: '/findings/timeline',
   adversarial: '/findings/adversarial', powerCalc: '/experiments/power', relatedWork: '/findings/related',
@@ -101,6 +102,7 @@ function AppContent() {
   const renderModule = () => {
     const content = (() => {
       switch (state.currentModule) {
+        case 'salah': return <SalahPage />;
         case 'dashboard': return <DashboardPage />;
         case 'papers': return <PapersPage />;
         case 'claimExplorer': return <ClaimExplorerPage />;
