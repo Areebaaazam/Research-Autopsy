@@ -3,11 +3,12 @@ import { useResearch } from '../context/ResearchContext';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { FileText, Upload, AlertCircle, FileUp, X, CheckCircle, FileSpreadsheet } from 'lucide-react';
+import { PaperHealthScorecard } from '../components/PaperHealthScorecard';
+import { FileText, Upload, AlertCircle, FileUp, X, CheckCircle, FileSpreadsheet, Layers } from 'lucide-react';
 
 export function PapersPage() {
-  const { state, uploadPaper, findGaps, setModule } = useResearch();
-  const { paperAnalysis, isLoading, error } = state;
+  const { state, uploadPaper, findGaps, setModule, loadPaperSnapshot } = useResearch();
+  const { paperAnalysis, isLoading, error, paperSnapshots } = state;
   const [inputText, setInputText] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
@@ -86,9 +87,28 @@ export function PapersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Paper Analyzer</h1>
-        <p className="text-sm text-slate-400 mt-1">Upload a research paper (PDF or DOCX) for analysis</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Paper Analyzer</h1>
+          <p className="text-sm text-slate-400 mt-1">Upload a research paper (PDF or DOCX) for analysis</p>
+        </div>
+        {paperSnapshots.length > 0 && (
+          <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+            <Layers className="w-4 h-4 text-emerald-400" />
+            <span className="text-slate-300 font-medium hidden sm:inline">Active Snapshot:</span>
+            <select
+              value={state.paperTextHash || ''}
+              onChange={e => loadPaperSnapshot(e.target.value)}
+              className="bg-slate-900 text-slate-200 border border-slate-700 rounded px-2 py-1 focus:outline-none focus:border-emerald-500 font-mono text-xs">
+              <option value="">Current Analysis</option>
+              {paperSnapshots.map(snap => (
+                <option key={snap.id} value={snap.textHash}>
+                  {snap.label} ({snap.textHash.slice(0, 6)})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <Card title="Upload Research Paper">
@@ -171,6 +191,8 @@ export function PapersPage() {
 
       {paperAnalysis && !isLoading && (
         <>
+          <PaperHealthScorecard />
+
           <Card title={paperAnalysis.title} subtitle="Paper Analysis">
             <div className="space-y-5">
               <Section label="Abstract" content={paperAnalysis.abstract} />

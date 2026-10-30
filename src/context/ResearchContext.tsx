@@ -66,6 +66,7 @@ type Action =
   | { type: 'SET_NUMERICAL_AUDIT'; audit: NumericalAudit }
   | { type: 'SET_REVISION_COMPARISON'; comparison: RevisionComparison }
   | { type: 'ADD_PAPER_SNAPSHOT'; snapshot: PaperSnapshot }
+  | { type: 'LOAD_PAPER_SNAPSHOT'; textHash: string }
   | { type: 'SET_RESEARCH_GAPS'; gaps: ResearchGap[] }
   | { type: 'SET_NOVELTY_CHECK'; check: NoveltyCheck }
   | { type: 'SET_EXPERIMENT_PLAN'; plan: ExperimentPlan }
@@ -102,6 +103,18 @@ function researchReducer(state: ResearchState, action: Action): ResearchState {
     case 'SET_NUMERICAL_AUDIT': return { ...state, numericalAudit: action.audit };
     case 'SET_REVISION_COMPARISON': return { ...state, revisionComparison: action.comparison };
     case 'ADD_PAPER_SNAPSHOT': return { ...state, paperSnapshots: [...state.paperSnapshots, action.snapshot] };
+    case 'LOAD_PAPER_SNAPSHOT': {
+      const snap = state.paperSnapshots.find(s => s.textHash === action.textHash);
+      if (!snap) return state;
+      return {
+        ...state,
+        paperText: snap.text,
+        paperTextHash: snap.textHash,
+        paperAnalysis: snap.analysis || state.paperAnalysis,
+        paperAnalysisHash: snap.textHash,
+        resultPaperHash: snap.textHash,
+      };
+    }
     case 'SET_RESEARCH_GAPS': return { ...state, researchGaps: action.gaps };
     case 'SET_NOVELTY_CHECK': return { ...state, noveltyCheck: action.check };
     case 'SET_EXPERIMENT_PLAN': return { ...state, experimentPlan: action.plan };
@@ -165,6 +178,7 @@ interface ResearchContextType {
   extractClaimEvidence: () => Promise<void>;
   runNumericalAudit: () => Promise<void>;
   savePaperSnapshot: (label: string) => void;
+  loadPaperSnapshot: (textHash: string) => void;
   compareRevisions: (oldId: string, newId: string) => Promise<void>;
   loadDemo: () => void;
   clearAll: () => void;
@@ -340,6 +354,12 @@ export function ResearchProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ADD_PAPER_SNAPSHOT', snapshot });
     addMemoryItem({ type: 'paper', title: `Snapshot: ${label}`, content: `Paper version saved. Hash: ${state.paperTextHash}`, tags: ['snapshot', label] });
   }, [state.paperText, state.paperTextHash, state.paperAnalysis]);
+
+  const loadPaperSnapshot = useCallback((textHash: string) => {
+    if (textHash) {
+      dispatch({ type: 'LOAD_PAPER_SNAPSHOT', textHash });
+    }
+  }, []);
 
   const compareRevisions = useCallback(async (oldId: string, newId: string) => {
     const older = state.paperSnapshots.find(s => s.id === oldId);
@@ -565,7 +585,7 @@ export function ResearchProvider({ children }: { children: ReactNode }) {
     <ResearchContext.Provider value={{
       state, dispatch, analysisMode,
       setModule, confirmNavigation, cancelNavigation, uploadPaper, findGaps, checkOverlap, analyzeExperiment, runAutopsy, runReviewer,
-      extractClaimEvidence, runNumericalAudit, savePaperSnapshot, compareRevisions,
+      extractClaimEvidence, runNumericalAudit, savePaperSnapshot, loadPaperSnapshot, compareRevisions,
       loadDemo, clearAll, toggleTheme,
       addMemoryItem, removeMemoryItem, updateMemoryItem,
       getBackup, importBackup,
