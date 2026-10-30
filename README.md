@@ -1,41 +1,84 @@
-# Research Autopsy
+# Research Autopsy 🔬
 
-AI-powered research paper analysis tool. Upload a PDF, and the app extracts structured information, identifies research gaps, checks idea novelty, stress-tests methodology, and more.
+> **AI-Powered Research Paper Analysis, Consistency Audit, & Experiment Workbench**
 
-## Status
+**Research Autopsy** is an advanced analysis platform designed for researchers, peer reviewers, and scientific authors. It extracts structured research findings, performs deterministic numerical consistency audits, identifies unaddressed research gaps, stress-tests methodologies against peer-reviewer attacks, and tracks paper revision progress over time.
 
-Early development. Core extraction and gap analysis work. Expect rough edges and incomplete features.
+---
 
-## Quick Start
+## ✨ Key Features
+
+- **📊 Real-time Paper Health Scorecard**: Evaluates paper strength with a composite rating based on claim verification, numerical consistency, research gap density, and open reviewer concerns.
+- **🔍 Claim & Evidence Verification**: Extracts core research claims and pairs them directly with supporting textual evidence passages.
+- **🔢 Deterministic Numerical Consistency Audit**: Automatically parses mathematical metrics, table results, and formulas in text to detect mathematical discrepancies and inconsistency flags.
+- **💡 Research Gap Extraction**: Identifies author-acknowledged limitations, unaddressed field-wide gaps, and prospective research directions.
+- **🛡️ Reviewer #2 Attack Simulator & Autopsy**: Stress-tests paper methodology to predict reviewer objections, fatal flaws, and recommended counter-experiments.
+- **🔄 Revision Comparison & Snapshot Switcher**: Compare paper versions side-by-side to track resolved concerns and new findings across iterations.
+- **⌨️ Command Palette (`Ctrl+K` / `Cmd+K`)**: Keyboard-first navigation, finding search, and rapid UI theme switching.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+Ensure you have **Node.js 18+** and **npm** installed on your system.
+
+### 2. Installation
+Install dependencies for both the Express backend server and the React frontend:
 
 ```sh
-# Install dependencies
+# Install backend dependencies
 cd server && npm install
+
+# Install frontend dependencies
 cd .. && npm install
+```
 
-# Set API key (Groq, Google, or OpenAI)
-#   gsk_...   → Groq (default)
-#   AIza...   → Google Gemini
-#   sk-...    → OpenAI
-echo 'GROQ_API_KEY=gsk_your_key_here' > server/.env
+### 3. API Key Configuration (Optional)
+Configure an API key in `server/.env` for full AI-powered analysis mode. Supported providers include **Groq** (default), **Google Gemini**, and **OpenAI**:
 
-# Start backend + frontend
+```sh
+echo "GROQ_API_KEY=gsk_your_groq_api_key_here" > server/.env
+```
+
+*Note: If no API key is set, the application operates seamlessly in **Heuristic Mode** or **Demo Mode**.*
+
+### 4. Running the Application
+Start the backend server and Vite frontend development server:
+
+```sh
+# Start backend server (Port 3002)
 cd server && node index.js &
+
+# Start frontend application (Port 5173)
 cd .. && npm run dev
 ```
 
-Open http://localhost:5173. Upload a PDF (survey papers work best) and explore the modules.
+Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
-## Tests
+---
+
+## 🧪 Testing & Verification
+
+Run the test suite powered by Vitest:
 
 ```sh
-npx vitest run
+npm test
 ```
 
-78 tests across 4 suites: quotation validation, text polish, numerical audit, and gap extraction + error handling.
+The test suite includes 78 tests covering quotation validation, text polish, deterministic numerical audit, and gap extraction error handling.
 
-## Tech
+To build the production application:
 
-- Frontend: React 19, TypeScript, Vite, Tailwind 4
-- Backend: Express 5, PDF text extraction
-- AI: Groq (qwen), Google Gemini, or OpenAI
+```sh
+npm run build
+```
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS 4, Lucide Icons
+- **Backend**: Express 5 (Node.js), PDF/Word document text extraction (`pdf-parse`, `mammoth`)
+- **Testing**: Vitest, Testing Library, Playwright
+- **AI Integration**: Groq (Qwen/Llama), Google Gemini, or OpenAI API
