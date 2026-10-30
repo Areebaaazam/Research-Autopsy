@@ -5,7 +5,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { QueueSection } from './components/QueueSection';
 import { EvidencePanel } from './components/EvidencePanel';
 import { NavigationConfirm } from './components/NavigationConfirm';
-import { AlertCircle, X, Wifi, WifiOff, Command, PanelRight, PanelRightClose } from 'lucide-react';
+import { AlertCircle, X, Wifi, WifiOff, Command, PanelRight, PanelRightClose, Layers } from 'lucide-react';
 
 // Eager — core working modules
 import { DashboardPage } from './pages/DashboardPage';
@@ -51,7 +51,7 @@ for (const [mod, route] of Object.entries(MODULE_ROUTES)) ROUTE_TO_MODULE[route]
 const SCROLL_KEY = 'research-autopsy-scroll';
 
 function AppContent() {
-  const { state, dispatch, analysisMode } = useResearch();
+  const { state, dispatch, analysisMode, loadPaperSnapshot } = useResearch();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -156,10 +156,27 @@ function AppContent() {
                 )}
               </div>
             )}
+            {state.paperSnapshots.length > 0 && (
+              <div className="hidden md:flex items-center space-x-1.5 text-xs bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                <Layers className="w-3 h-3 text-emerald-400" />
+                <select
+                  value={state.paperTextHash || ''}
+                  onChange={e => loadPaperSnapshot(e.target.value)}
+                  className="bg-transparent text-slate-300 text-[11px] focus:outline-none cursor-pointer">
+                  <option value="" className="bg-slate-900">Active Snapshot</option>
+                  {state.paperSnapshots.map(snap => (
+                    <option key={snap.id} value={snap.textHash} className="bg-slate-900">
+                      {snap.label} ({snap.textHash.slice(0, 6)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {state.editorDirty && <span className="text-xs text-amber-400 flex items-center space-x-1"><span>●</span><span>Unsaved</span></span>}
           </div>
           <div className="flex items-center space-x-2">
             <button onClick={() => setPaletteOpen(!paletteOpen)}
+              title="Command Palette (Ctrl+K or Cmd+K)"
               className="px-2 py-1 text-xs text-slate-500 hover:text-slate-200 border border-slate-700/50 rounded-md flex items-center space-x-1.5 transition-colors">
               <Command className="w-3 h-3" /><span>K</span>
             </button>
@@ -167,7 +184,7 @@ function AppContent() {
             {state.backendStatus === 'connected' && <span className="text-xs text-emerald-400 flex items-center space-x-1"><Wifi className="w-3 h-3" /><span>Online</span></span>}
             {hasPageWithPanel && (
               <button onClick={() => dispatch({ type: 'SET_LAYOUT', layout: { ...state.layout, evidencePanelOpen: !state.layout.evidencePanelOpen } })}
-                className="p-1 text-slate-500 hover:text-slate-200 rounded transition-colors" aria-label="Toggle evidence panel">
+                className="p-1 text-slate-500 hover:text-slate-200 rounded transition-colors" aria-label="Toggle evidence panel" title="Toggle Evidence Panel">
                 {state.layout.evidencePanelOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
               </button>
             )}

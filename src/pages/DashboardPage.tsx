@@ -1,12 +1,13 @@
 import { useResearch } from '../context/ResearchContext';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { BookOpen, AlertTriangle, ArrowRight, FileText } from 'lucide-react';
+import { PaperHealthScorecard } from '../components/PaperHealthScorecard';
+import { BookOpen, AlertTriangle, ArrowRight, FileText, Layers } from 'lucide-react';
 
 export function DashboardPage() {
-  const { state, setModule, loadDemo, analysisMode } = useResearch();
+  const { state, setModule, loadDemo, loadPaperSnapshot, analysisMode } = useResearch();
   const { paperAnalysis, claimEvidence, researchGaps, experimentBriefs,
-    reviewerResponses, autopsyResult, nextSteps, memory, demoMode, numericalAudit, revisionComparison } = state;
+    reviewerResponses, autopsyResult, nextSteps, memory, demoMode, numericalAudit, revisionComparison, paperSnapshots } = state;
 
   const hasResearch = paperAnalysis || demoMode;
 
@@ -32,7 +33,7 @@ export function DashboardPage() {
           <p className="text-sm text-slate-400 mt-1">Find a weakness · Trace the evidence · Check the fix</p>
         </div>
         {!hasResearch && (
-          <button onClick={loadDemo} className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-sm rounded-md transition-colors flex items-center space-x-2">
+          <button onClick={loadDemo} className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-sm rounded-md transition-colors flex items-center space-x-2 shadow-sm">
             <BookOpen className="w-4 h-4" /><span>Load Demo Project</span>
           </button>
         )}
@@ -46,7 +47,7 @@ export function DashboardPage() {
           <h2 className="text-lg font-semibold text-slate-300 mb-2">No Research Loaded</h2>
           <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">Upload a research paper to analyze claims, trace evidence, and check your fixes.</p>
           <div className="flex justify-center space-x-3">
-            <button onClick={loadDemo} className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white text-sm rounded-md">Load Demo Project</button>
+            <button onClick={loadDemo} className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white text-sm rounded-md shadow-sm">Load Demo Project</button>
             <button onClick={() => setModule('papers')} className="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded-md">Upload Paper</button>
           </div>
         </div></Card>
@@ -56,12 +57,28 @@ export function DashboardPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0 mr-4">
-                <div className="flex items-center space-x-2 mb-1.5">
+                <div className="flex items-center space-x-2 mb-1.5 flex-wrap gap-y-1">
                   <Badge variant={analysisMode === 'demo' ? 'warning' : analysisMode === 'ai' ? 'success' : 'default'}>
                     {analysisMode === 'demo' ? 'Demo (fictional)' : analysisMode === 'ai' ? 'AI-powered' : 'Heuristic extraction'}
                   </Badge>
                   {state.paperAnalysis?.paperVersion?.textHash && (
-                    <span className="text-[10px] text-slate-600 font-mono">v{state.paperAnalysis.paperVersion.textHash.slice(0, 8)}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">v{state.paperAnalysis.paperVersion.textHash.slice(0, 8)}</span>
+                  )}
+                  {paperSnapshots.length > 0 && (
+                    <div className="flex items-center space-x-1.5 ml-auto text-xs bg-slate-800/90 px-2 py-0.5 rounded border border-slate-700">
+                      <Layers className="w-3 h-3 text-slate-400" />
+                      <select
+                        value={state.paperTextHash || ''}
+                        onChange={e => loadPaperSnapshot(e.target.value)}
+                        className="bg-transparent text-slate-300 text-xs focus:outline-none cursor-pointer">
+                        <option value="" className="bg-slate-900">Current Paper Version</option>
+                        {paperSnapshots.map(snap => (
+                          <option key={snap.id} value={snap.textHash} className="bg-slate-900">
+                            {snap.label} ({snap.textHash.slice(0, 6)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   )}
                 </div>
                 <h2 className="text-lg font-semibold text-slate-100 truncate">{paperAnalysis?.title || 'Untitled'}</h2>
@@ -77,6 +94,9 @@ export function DashboardPage() {
               </div>
             </div>
           </Card>
+
+          {/* Interactive Paper Health Scorecard */}
+          <PaperHealthScorecard />
 
           {/* Top actionable concern */}
           {topFindingText && (
@@ -99,7 +119,7 @@ export function DashboardPage() {
 
           {/* Quick actions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <button onClick={() => setModule('claimExplorer')} className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-4 text-left hover:bg-slate-800 transition-colors">
+            <button onClick={() => setModule('claimExplorer')} className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-4 text-left hover:bg-slate-800 transition-colors shadow-sm">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-slate-500 uppercase tracking-wider">Findings</span>
                 <span className="text-lg font-bold text-slate-200">{claimEvidence.length}</span>
@@ -107,7 +127,7 @@ export function DashboardPage() {
               <p className="text-sm text-slate-300">Claim–Evidence pairs</p>
               <p className="text-xs text-slate-500 mt-0.5">{claimEvidence.filter(c => c.assessment === 'supported').length} supported</p>
             </button>
-            <button onClick={() => setModule('experiments')} className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-4 text-left hover:bg-slate-800 transition-colors">
+            <button onClick={() => setModule('experiments')} className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-4 text-left hover:bg-slate-800 transition-colors shadow-sm">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-slate-500 uppercase tracking-wider">Planned</span>
                 <span className="text-lg font-bold text-slate-200">{plannedExperiments}</span>
@@ -115,7 +135,7 @@ export function DashboardPage() {
               <p className="text-sm text-slate-300">Experiments to verify</p>
               <p className="text-xs text-slate-500 mt-0.5">{experimentBriefs.filter(b => b.status === 'completed').length} completed</p>
             </button>
-            <button onClick={() => setModule('revisionCompare')} className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-4 text-left hover:bg-slate-800 transition-colors">
+            <button onClick={() => setModule('revisionCompare')} className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-4 text-left hover:bg-slate-800 transition-colors shadow-sm">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-slate-500 uppercase tracking-wider">Revisions</span>
                 <span className="text-lg font-bold text-slate-200">{unresolvedConcerns}</span>

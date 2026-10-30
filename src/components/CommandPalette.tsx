@@ -9,13 +9,19 @@ interface PaletteResult {
 }
 
 export function CommandPalette({ onClose }: { onClose: () => void }) {
-  const { state, setModule, savePaperSnapshot, exportReviewPacket } = useResearch();
+  const { state, setModule, savePaperSnapshot, exportReviewPacket, toggleTheme, dispatch } = useResearch();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const results = getSearchResults(query, state, { setModule, savePaperSnapshot, exportReviewPacket });
+  const results = getSearchResults(query, state, {
+    setModule,
+    savePaperSnapshot,
+    exportReviewPacket,
+    toggleTheme,
+    toggleSidebar: () => dispatch({ type: 'SET_LAYOUT', layout: { ...state.layout, sidebarCollapsed: !state.layout.sidebarCollapsed } }),
+  });
 
   useEffect(() => { inputRef.current?.focus(); }, []);
   useEffect(() => { setSelectedIndex(0); }, [query]);
@@ -35,10 +41,10 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" onClick={onClose}>
-      <div className="fixed inset-0 bg-black/60" />
-      <div className="relative w-full max-w-xl bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="relative w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center px-4 py-3 border-b border-slate-700/60">
-          <span className="text-slate-500 text-sm mr-2">⌘</span>
+          <span className="text-slate-500 text-sm mr-2 font-mono">⌘</span>
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKeyDown}
             placeholder="Search modules, findings, papers, notes..."
             className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 focus:outline-none" />
@@ -47,13 +53,13 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
         {results.length > 0 && (
           <div ref={resultsRef} className="max-h-80 overflow-y-auto p-2 space-y-0.5">
             {results.map((r, i) => (
-              <button key={`${r.category}-${r.label}`}
+              <button key={`${r.category}-${r.label}-${i}`}
                 onClick={() => { r.action(); onClose(); }}
                 onMouseEnter={() => setSelectedIndex(i)}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left text-sm transition-colors ${
-                  i === selectedIndex ? 'bg-emerald-900/40 text-emerald-300' : 'text-slate-300 hover:bg-slate-800/60'
+                  i === selectedIndex ? 'bg-emerald-900/40 text-emerald-300 font-medium' : 'text-slate-300 hover:bg-slate-800/60'
                 }`}>
-                <span className="text-[10px] text-slate-500 uppercase w-16 flex-shrink-0">{r.category}</span>
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider w-16 flex-shrink-0 font-mono">{r.category}</span>
                 <span className="flex-1 min-w-0 truncate">{r.label}</span>
                 {r.description && <span className="text-xs text-slate-500 truncate max-w-[200px] hidden sm:block">{r.description}</span>}
               </button>
@@ -71,6 +77,12 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
 function getSearchResults(query: string, state: any, actions: any): PaletteResult[] {
   const q = query.toLowerCase();
   const results: PaletteResult[] = [];
+
+  // System actions
+  const systemActions: PaletteResult[] = [
+    { label: 'Toggle Light / Dark Theme', description: 'Switch UI theme', action: actions.toggleTheme, category: 'System' },
+    { label: 'Toggle Sidebar', description: 'Expand or collapse sidebar', action: actions.toggleSidebar, category: 'System' },
+  ];
 
   // Modules
   const modules: { id: string; label: string }[] = [
@@ -100,11 +112,17 @@ function getSearchResults(query: string, state: any, actions: any): PaletteResul
 
   if (!q) {
     // Show default results
-    modules.forEach(m => results.push({ label: m.label, description: '', action: () => actions.setModule(m.id), category: 'Go to' }));
+    systemActions.forEach(act => results.push(act));
+    modules.slice(0, 10).forEach(m => results.push({ label: m.label, description: '', action: () => actions.setModule(m.id), category: 'Go to' }));
     if (state.paperText) results.push({ label: 'Save paper snapshot', description: '', action: () => actions.savePaperSnapshot(`v${state.paperSnapshots.length + 1}`), category: 'Action' });
     results.push({ label: 'Export review packet', description: '', action: () => actions.exportReviewPacket(), category: 'Action' });
     return results;
   }
+
+  // System actions filter
+  systemActions.forEach(act => {
+    if (act.label.toLowerCase().includes(q)) results.push(act);
+  });
 
   // Filter modules
   modules.forEach(m => {
