@@ -74,6 +74,7 @@ function getSearchResults(query: string, state: any, actions: any): PaletteResul
 
   // Modules
   const modules: { id: string; label: string }[] = [
+    { id: 'salah', label: 'Salah Companion' },
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'papers', label: 'Papers' },
     { id: 'claimExplorer', label: 'Claim–Evidence'},
